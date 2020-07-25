@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using negotium.API.Controllers;
 using negotium.API.Dtos;
 using negotium.API.Errors;
+using negotium.API.Helpers;
 using negotium.Core.Interfaces;
 using negotium.Core.Specification;
 
@@ -36,15 +37,23 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<ProductToReturnDto>>> getProducts()
+        public async Task<ActionResult<Pagination<ProductToReturnDto>>> getProducts([FromQuery]ProductSpecParams productParams)
         {
             //Storing products as list in var products , and returning them
-            var spec = new ProductsWithTypesAndBrandsSpecification();
+            var spec = new ProductsWithTypesAndBrandsSpecification(productParams);
+
+            var countSpec = new ProductWithFiltersForCountSpecification(productParams);
+
+            var totalItems = await _productsRepo.CountAsync(countSpec);
+
 
             var products = await _productsRepo.ListAsync(spec);
-            if(products == null) return NotFound(new ApiResponse(404));
+             //if(products == null) return NotFound(new ApiResponse(404));
+            
+            var data = _mapper.Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(products);
+         
 
-            return Ok(_mapper.Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(products));
+            return Ok(new Pagination<ProductToReturnDto>(productParams.PageIndex,productParams.pageSize,totalItems,data));
         }
 
         [HttpGet("{id}")]
