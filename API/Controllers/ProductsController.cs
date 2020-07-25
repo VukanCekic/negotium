@@ -5,9 +5,12 @@ using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using negotium.API.Controllers;
 using negotium.API.Dtos;
+using negotium.API.Errors;
 using negotium.Core.Interfaces;
 using negotium.Core.Specification;
 
@@ -15,9 +18,7 @@ namespace API.Controllers
 
 {
 
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseApiController
     {
         private readonly IGenericRepository<Product> _productsRepo;
         private readonly IGenericRepository<ProductBrand> _productBrandRepo;
@@ -41,10 +42,14 @@ namespace API.Controllers
             var spec = new ProductsWithTypesAndBrandsSpecification();
 
             var products = await _productsRepo.ListAsync(spec);
+            if(products == null) return NotFound(new ApiResponse(404));
+
             return Ok(_mapper.Map<IReadOnlyList<Product>,IReadOnlyList<ProductToReturnDto>>(products));
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ProductToReturnDto>> getProduct(int id)
         {
             var spec = new ProductsWithTypesAndBrandsSpecification(id);
