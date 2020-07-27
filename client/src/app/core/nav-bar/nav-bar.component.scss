@@ -10,3 +10,22 @@
     top: -12px;
     right: 32px;
 }
+
+a {
+    text-decoration: none;
+    color: #343a40;
+    &.active {
+        color: #4EADBC;
+        border-bottom: 3px solid #4EADBC;
+        @media only screen and (max-width: 780px) {
+            border-bottom: none;
+        }
+    }
+}
+
+.logo {
+    cursor: pointer;
+    &:focus {
+        outline: none;
+    }
+}
