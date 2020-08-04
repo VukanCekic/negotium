@@ -9,6 +9,9 @@ using negotium.API.Extensions;
 using StackExchange.Redis;
 using negotium.API.Helpers;
 using negotium.API.Middleware;
+using Core.Entities.Identity;
+using Infrastructure.Identity;
+using API.Extensions;
 
 namespace API
 {
@@ -30,11 +33,16 @@ namespace API
             services.AddAutoMapper(typeof(MappingProfiles));
             services.AddControllers();
             services.AddDbContext<StoreContext>(x => x.UseSqlite(_configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<AppIdentityDbContext>(x =>
+            {
+                 x.UseSqlite(_configuration.GetConnectionString("IdentityConnection"));
+            });
             services.AddSingleton<IConnectionMultiplexer>(c =>{
                 var configuration = ConfigurationOptions.Parse(_configuration.GetConnectionString("Redis"),true);
                 return ConnectionMultiplexer.Connect(configuration);
             });
             services.AddApplicationServices();
+            services.AddIDentityServices(_configuration);
             services.AddSwaggerDocumentation();
             services.AddCors(opt =>
             {
@@ -60,7 +68,8 @@ namespace API
             app.UseStaticFiles();
 
             app.UseCors("CorsPolicy");
-
+            
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseSwaggerDocumentation();
 
